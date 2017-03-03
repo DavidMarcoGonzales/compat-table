@@ -415,7 +415,7 @@ $(function() {
         '%,transparent 100%)';
     }
     var colour = getBrowserColour(id);
-    elem
+/*    elem
       .attr('data-num', i)
       .attr('data-features', featuresCount)
       .attr('data-flagged-features', flaggedFeaturesCount)
@@ -429,7 +429,7 @@ $(function() {
       .css({'background-image': gradient(colour, featuresCount) +
         (flaggedFeaturesCount > featuresCount
           ? ',' + gradient(colour.replace(".5",".2"), flaggedFeaturesCount)
-          : '')});
+          : '')});*/
   };
   $('.browser-name, th.current').each(window.__updateHeaderTotal);
 

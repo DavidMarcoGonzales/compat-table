@@ -482,24 +482,6 @@ function dataToHtml(skeleton, rawBrowsers, tests, compiler) {
     return name.replace(/^[\s<>&"',]+|[\s<>&"',]+$/g, '').replace(/[\s<>&"]+/g, '_');
   }
 
-  // Write the browser headers
-
-  Object.keys(browsers).forEach(function(browserId) {
-    var b = browsers[browserId];
-    if (!b) {
-      throw new Error('No browser with ID ' + browserId);
-    }
-    head.append($('<th></th>')
-      .addClass("platform " + browserId + ' ' + (b.platformtype || 'desktop'))
-      .addClass(b.obsolete ? "obsolete" : b.unstable ? "unstable" : "")
-      .attr("data-browser", browserId)
-      .append(
-        $('<a href="#' + browserId + '" class="browser-name"></a>')
-          .append('<abbr title="' + b.full + '">' + b.short + '</abbr>'))
-      .append(footnoteHTML(b)
-      )
-    );
-  });
 
   // Now print the results.
   tests.forEach(function(t, testNum) {
@@ -530,7 +512,7 @@ function dataToHtml(skeleton, rawBrowsers, tests, compiler) {
       .append($('<td></td>')
         .attr('id', getHtmlId(id))
         .append('<span><a class="anchor" href="#' + getHtmlId(id) + '">&sect;</a>' + name + footnoteHTML(t) + '</span></td>')
-        .append(testScript(t.exec, compiler, rowNum++))
+
       );
     body.append(testRow);
     // If this row has a different category to the last, add a title <tr> before it.
@@ -538,67 +520,6 @@ function dataToHtml(skeleton, rawBrowsers, tests, compiler) {
       testRow.before('<tr class="category"><td colspan="' + (Object.keys(browsers).length+2) + '">' + capitalise(t.category) + '</td></tr>');
     }
 
-    // Function to print out a single <td> result cell.
-    function resultCell(browserId, result, footnote) {
-      if (!browsers[browserId]) {
-        return;
-      }
-      result = testValue(result);
-
-      // Create the cell, and add classes and attributes
-      var cell = $('<td></td>');
-      cell.addClass({
-        'true': "yes",
-        'false': "no",
-        'undefined': "no",
-        'tally': 'tally',
-        'flagged': 'no flagged',
-        'needs-polyfill-or-native': 'no needs-polyfill-or-native',
-        'strict': 'no strict',
-        'null': 'unknown',
-      }[result] || '');
-      if (result === "needs-polyfill-or-native") {
-        cell.attr('title', "Requires native support or a polyfill.");
-      }
-      else if (result === "strict") {
-        cell.attr('title', "Support for this feature incorrectly requires strict mode.");
-      }
-
-      cell.attr('data-browser', browserId).addClass(
-        browsers[browserId].obsolete ? "obsolete" :
-        browsers[browserId].unstable ? "unstable" :
-        "");
-
-      // Add extra signifiers if the result is not applicable.
-      if (isOptional(t.category) &&
-        // Annex B is only optional for non-browsers.
-        (t.category.indexOf("annex b")===-1 || (browsers[browserId].platformtype &&
-          "desktop|mobile".indexOf(browsers[browserId].platformtype) === -1 &&
-          !browsers[browserId].needs_annex_b))) {
-        var msg = ({
-          'pre-strawman': "This proposal has not yet been accepted by ECMA Technical Committee 39",
-          'strawman (stage 0)': "This proposal has not yet reached ECMA TC39 stage 1",
-        }[t.category]
-          || "This feature is optional on non-browser platforms")
-         + ", and doesn't contribute to the platform's support percentage.";
-        cell.attr('title', msg);
-        cell.addClass("not-applicable");
-      }
-
-      if (result !== 'tally') {
-        cell.text({
-          strict: 'Strict',
-          flagged: 'Flag',
-          'true': 'Yes',
-          'null': '?',
-        }[result] || 'No');
-      }
-
-      if (footnote) {
-        cell.append(footnote);
-      }
-      return cell;
-    }
 
     // Print all the results for the subtests
     if ("subtests" in t) {
@@ -622,11 +543,7 @@ function dataToHtml(skeleton, rawBrowsers, tests, compiler) {
         Object.keys(browsers).forEach(function(browserId) {
           var result = subtest.res[browserId];
 
-          subtestRow.append(resultCell(
-            browserId,
-            result,
-            footnoteHTML(result)
-          ));
+
         });
       });
     }
@@ -646,37 +563,19 @@ function dataToHtml(skeleton, rawBrowsers, tests, compiler) {
             outOf += 1;
           });
           var grade = (tally / outOf);
-          var cell = resultCell(browserId, 'tally')
-            .text((tally|0) + "/" + outOf)
-            .attr('data-tally', grade);
-          if (grade > 0 && grade < 1 && !cell.hasClass('not-applicable')) {
-            cell.attr('style','background-color:hsl(' + (120*grade|0) + ','
-              +((86 - (grade*44))|0)  +'%,50%)');
-          }
 
-          if (flaggedTally) {
-            cell.attr('data-flagged-tally',  (tally + flaggedTally) / outOf);
-          }
-          testRow.append(cell);
+
+
+
       }
       // For single tests:
       else {
         var result = t.res[browserId];
 
-        testRow.append(resultCell(
-          browserId,
-          result,
-          footnoteHTML(result)
-        ));
       }
     });
 
-    // Finish the <tr>
-    if (t.separator === 'after') {
-      body.append(
-        '<tr><th colspan="' + (Object.keys(browsers).length + 3) + '" class="separator"></th></tr>'
-      );
-    }
+
   });
 
   $('#footnotes').append(allFootnotes());
